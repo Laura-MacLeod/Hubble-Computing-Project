@@ -17,7 +17,7 @@ from scipy.optimize import curve_fit
 %matplotlib inline
 
 
-#Import the data, setting each column as a variable for each observation number
+#Import the data, setting each column as a variable for each observation number. REMEMBER TO CHANGE FILE PATH FOR CSV IMPORT
 
 wavelength, ob19909, ob27028, ob16652, ob31458, ob47548, ob21100, ob11768, ob36969, ob36656, ob14915, ob16766, ob18197, ob30915, ob41090, ob48054, ob39451, ob36999, ob23674, ob23095, ob30768, ob31991, ob31544, ob38008, ob16076, ob43937, ob42251, ob36537, ob15338, ob23522, ob47565 = np.loadtxt("Data/Halpha_spectral_data.csv", skiprows=True, unpack=True, delimiter=',')
 
@@ -95,7 +95,7 @@ errors = {19909:error[0], 27028:error[1], 16652:error[2], 31458:error[3], 47548:
 
 
 
-#Importing the distance values and filtering out the 5 invalid instrument responses
+#Importing the distance values and filtering out the 5 invalid instrument responses. REMEMBER TO CHANGE FILE PATH FOR CSV IMPORT
 
 distances = pd.read_csv("Data/Distance_Mpc.csv")
 

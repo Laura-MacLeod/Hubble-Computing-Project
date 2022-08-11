@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 19 13:49:20 2020
+
+@author: laura
+"""
+
+#Import the necessary modules
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy as sp
+from scipy.optimize import curve_fit
+
+%matplotlib inline
+
+
+#Import the data, setting each column as a variable for each observation number
+
+wavelength, ob19909, ob27028, ob16652, ob31458, ob47548, ob21100, ob11768, ob36969, ob36656, ob14915, ob16766, ob18197, ob30915, ob41090, ob48054, ob39451, ob36999, ob23674, ob23095, ob30768, ob31991, ob31544, ob38008, ob16076, ob43937, ob42251, ob36537, ob15338, ob23522, ob47565 = np.loadtxt("Data/Halpha_spectral_data.csv", skiprows=True, unpack=True, delimiter=',')
+
+array1 = (ob19909, ob27028, ob16652, ob31458, ob47548, ob21100, ob11768, ob36969, ob36656, ob14915, ob16766, ob18197, ob30915, ob41090, ob48054, ob39451, ob36999, ob23674, ob23095, ob30768, ob31991, ob31544, ob38008, ob16076, ob43937, ob42251, ob36537, ob15338, ob23522, ob47565)
+
+
+
+#Define the Gaussian fit function
+
+def curve_fit(x, a, mean, sig, m, c):
+    gaus = a*np.exp(-(x-mean)**2/(2*sig**2))
+    line = m*x + c
+    return gaus + line
+
+
+
+#Set initial guesses and use the curve_fit function to obtain the curve's parameters. Spyder's replace text function sped up this process.
+
+plt.rcParams.update({'figure.max_open_warning': 0})
+
+
+array2 = []
+array3 = []
+
+
+
+for i in np.linspace(1, 30, 30):
+    plt.figure(i)
+    plt.plot(wavelength, array1[int(i-1)])
+    plt.xlabel("Wavelength [nm]")
+    plt.ylabel("Intensity [AU]")
+    if int(i)==11 or int(i)==19 or int(i)==16 or int(i)==29:
+        guess1 = [40, 6.7e-7, 0.3e-7, -8e7, 800]
+    else:
+        guess1 = [30, 7e-7, 0.2e-7, 10e7, 10]
+    para1, cov1 = sp.optimize.curve_fit(curve_fit, wavelength, array1[int(i-1)], guess1, maxfev=10000)
+    plt.plot(wavelength, curve_fit(wavelength, para1[0], para1[1], para1[2], para1[3], para1[4]))
+    array2.append(para1[1])
+    array3.append(np.sqrt(cov1[1][1]))
+    
+array2 = tuple(array2)
+array3 = tuple(array3)
+
+
+
+
+
+#Finding the velocity using redshift formula v = c * (λo^2 - λe^2) / (λo^2 + λe^2)
+
+def velocity(mean):
+    return 2.9979e8*((mean**2-(656.28e-9)**2)/(mean**2+(656.28e-9)**2))
+
+v = []
+
+for m in array2:
+    n = velocity(m)
+    v.append(n)
+
+
+
+#Finding the absolute uncertainty for each velocity
+
+error = []
+
+for j in range(0, 30):
+    newerror = (array3[j] * v[j]) / array2[j]
+    error.append(newerror)
+
+
+
+#Putting the velocities and errors into dictionaries with their corresponding observation numbers. Spyder's replace text function sped up this process.
+
+velocities = {19909:v[0], 27028:v[1], 16652:v[2], 31458:v[3], 47548:v[4], 21100:v[5], 11768:v[6], 36969:v[7], 36656:v[8], 14915:v[9], 16766:v[10], 18197:v[11], 30915:v[12], 41090:v[13], 48054:v[14], 39451:v[15], 36999:v[16], 23674:v[17], 23095:v[18], 30768:v[19], 31991:v[20], 31544:v[21], 38008:v[22], 16076:v[23], 43937:v[24], 42251:v[25], 36537:v[26], 15338:v[27], 23522:v[28], 47565:v[29]}
+errors = {19909:error[0], 27028:error[1], 16652:error[2], 31458:error[3], 47548:error[4], 21100:error[5], 11768:error[6], 36969:error[7], 36656:error[8], 14915:error[9], 16766:error[10], 18197:error[11], 30915:error[12], 41090:error[13], 48054:error[14], 39451:error[15], 36999:error[16], 23674:error[17], 23095:error[18], 30768:error[19], 31991:error[20], 31544:error[21], 38008:error[22], 16076:error[23], 43937:error[24], 42251:error[25], 36537:error[26], 15338:error[27], 23522:error[28], 47565:error[29]}
+
+
+
+#Importing the distance values and filtering out the 5 invalid instrument responses
+
+distances = pd.read_csv("Data/Distance_Mpc.csv")
+
+validdistances = distances[distances['Valid Instrument Response']==1]
+invaliddistances = distances[distances['Valid Instrument Response']==0]
+
+
+
+#Putting the distance values in the same order as the velocity values according to observation number
+
+dist = []
+
+for b in velocities:
+    for c in range(0, 25):
+        if validdistances.iloc[c, 0] == b in velocities:
+            dist.append(validdistances.iloc[c, 1])
+
+
+
+#Removing the velocities and errors corresponding to the invalid distance measurements
+
+newv = []
+
+for f in velocities:
+    for g in range(0, 25):
+        if validdistances.iloc[g, 0] == f:
+            newv.append(velocities[f])
+
+newerror = []
+
+for x in errors:
+    for z in range(0, 25):
+        if validdistances.iloc[z, 0] == x:
+            newerror.append(errors[x])
+
+
+
+#Plotting a scatter graph of distance (x) by velocity (y) with a line of best fit and error bars
+
+plt.scatter(dist, newv)
+plt.xlabel("Distance [Mpc]")
+plt.ylabel("Redshift Velocity [ms^-1]")
+plt.errorbar(dist, newv, yerr=newerror, capsize=5, linestyle='None')
+fit, matrix = np.polyfit(dist, newv, 1, cov=True)
+
+
+def bestfit(x):
+    return fit[0]*x + fit[1]
+
+values = np.linspace(0, 550, 100)
+
+plt.plot(values, bestfit(values))
+
+plt.savefig("Distance Velocity Graph")
+
+#Finding the gradient and its associated uncertainty.
+
+gradient = (fit[0])
+graderror = np.sqrt(matrix[0][0])
+
+print("The gradient is %0.2g and its associated uncertainty is %0.1g" % (gradient, graderror))
+
+#In kms^-1/Mpc:
+
+print("The calculated value for the Hubble Constant is %0.2g ± %0.1g kms^-1/Mpc" % (gradient*10**-3, graderror*10**-3))
+
+# 1 megaparsec = 3·09e22m
+# To express the Hubble Constant in s^-1, divide by 3.09e22
+
+hubble = gradient / 3.09e22
+
+uncertainty = (graderror * hubble) / gradient
+
+print("The calculated value for the Hubble Constant is %0.2g ± %0.1g s^-1" % (hubble, uncertainty))
+
+print("The theoretical value for the Hubble Constant is 2.20e-18 s^-1")
+
+
+print("Estimate of Hubble's constant: 64 +/- 4 km/s/Mpc")
+
+
+

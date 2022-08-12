@@ -6,6 +6,9 @@ Created on Thu Nov 19 13:49:20 2020
 @author: laura
 """
 
+# Code written by Laura MacLeod. Project concept provided by Imperial College London. CSV data files provided by Imperial College London.
+
+
 #Import the necessary modules
 
 import numpy as np
